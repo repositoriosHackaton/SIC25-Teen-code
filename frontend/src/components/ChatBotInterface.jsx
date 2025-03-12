@@ -50,7 +50,8 @@ const Temporizador = ({ minutos, onFinish }) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [tiempo]);
+  }, [tiempo, onFinish]); // Incluir onFinish en las dependencias
+
 
   const minutosRestantes = Math.floor(tiempo / 60);
   const segundosRestantes = tiempo % 60;
