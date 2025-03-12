@@ -45,6 +45,7 @@ def buscar_receta(busqueda):
     """
     Busca una receta en el sitio web basado en el término de búsqueda.
     """
+
     enlace_web = f"https://www.recetasgratis.net/busqueda?q={busqueda.replace(' ', '+')}"
     sopa = obtener_contenido(enlace_web)
     if not sopa:
@@ -85,9 +86,22 @@ def guardar_archivos(Base):
         with open(os.path.join(BASE_DIR, "data", "recetas.json"), 'w', encoding='utf-8') as f:
             json.dump(Base, f, indent=4, ensure_ascii=False)
         
-        usuario_modelo = md.modelo()
-        with open(os.path.join(BASE_DIR, "data", "modelo_usuario.json"), 'w', encoding='utf-8') as f:
-            json.dump(usuario_modelo, f, indent=4, ensure_ascii=False)
+        guardar_modelo()
+
+def guardar_modelo():
+    path = os.path.join(BASE_DIR, "data", "modelo_usuario.json")
+        
+
+    with open(path, 'r', encoding='utf-8') as f:
+        user = json.load(f)
+
+
+    usuario_modelo = md.modelo()
+
+    diccionario_combinado = {**user, **usuario_modelo}
+
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(diccionario_combinado, f, indent=4, ensure_ascii=False)
 
 
 def cargar_datos():
@@ -108,111 +122,61 @@ def mostrar_pasos(enlace):
     pasos = [p.get_text() for p in sopa.select("div.apartado")]
 
     return pasos
-    n_paso = 0
-
-    while( n_paso < len(pasos)):
-        st.subheader("Pasos de preparación:")
-        paso_actual = pasos[st.session_state.paso]
-        st.write(paso_actual + "\n")
-
-        if "minuto" in paso_actual:
-            tiempo = extraer_minutos(paso_actual)
-            if tiempo:
-                st.session_state.tiempo = int(tiempo)
-                st.button("Iniciar cronómetro", key="cronometro")
-
 
 
 def recomendados():
-
     path = os.path.join(BASE_DIR, "data", "modelo_usuario.json")
+    url = ["https://www.recetasgratis.net/busqueda/type/1"]  # Inicializar url como una lista vacía
+
+    # Cargar el modelo de usuario desde el archivo o generar uno nuevo
     if os.path.exists(path):
-        with open(path, 'r', encoding='utf-8') as f:
-            modelo = json.load(f)
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                modelo = json.load(f)
+        except json.JSONDecodeError:
+            print("Error al decodificar el archivo JSON.")
+        except Exception as e:
+            print(f"Error al cargar el modelo: {e}")
     else:
-        modelo = md.modelo()
+        try:
+            modelo = md.modelo()  # Generar un nuevo modelo
+        except Exception as e:
+            print(f"Error al generar el modelo: {e}")
 
-    url = modelo["url"]
+    if "url" in modelo:
+        url = modelo.get("url", url)
 
-    recomencion = {
+    recomendacion = {
         "nombre": [],
         "link": [],
         "dificultad": [],
         "comensales": [],
         "duracion": [],
-        "imagen" : []
+        "imagen": []
     }
 
     for enlace in url:
         sopa = obtener_contenido(enlace)
         if not sopa:
-            continue  # En lugar de return, usamos continue para no interrumpir todo el proceso
+            continue  # Continuar si no se obtiene contenido
 
         recomendados = sopa.select('div.resultado.link')
 
-        for i in range(min(10 // len(url), len(recomendados))):  # Evita errores de índice
-
+        # Limitar el número de recomendaciones a 10 o menos si hay menos resultados
+        for i in range(min(10, len(recomendados))):
             link_tag = recomendados[i].find('a')
             dificultad_tag = recomendados[i].find('span')
             comensales_tag = recomendados[i].find('span', class_='property comensales')
             duracion_tag = recomendados[i].find('span', class_='property duracion')
             img_tag = recomendados[i].find('source').get("srcset")
 
-            # Convertir objetos Tag a datos serializables
-            recomencion["nombre"].append(link_tag.get_text(strip=True) if link_tag else "Desconocida")
-            recomencion["link"].append(link_tag['href'] if link_tag and 'href' in link_tag.attrs else "")
-            recomencion["dificultad"].append(dificultad_tag.get_text(strip=True) if dificultad_tag else "Desconocida")
-            recomencion["comensales"].append(comensales_tag.get_text(strip=True) if comensales_tag else "Desconocido")
-            recomencion["duracion"].append(duracion_tag.get_text(strip=True) if duracion_tag else "Desconocido")
-            recomencion["imagen"].append(img_tag)
+            # Agregar datos a la recomendación
+            recomendacion["nombre"].append(link_tag.get_text(strip=True) if link_tag else "Desconocida")
+            recomendacion["link"].append(link_tag['href'] if link_tag and 'href' in link_tag.attrs else "")
+            recomendacion["dificultad"].append(dificultad_tag.get_text(strip=True) if dificultad_tag else "Desconocida")
+            recomendacion["comensales"].append(comensales_tag.get_text(strip=True) if comensales_tag else "Desconocido")
+            recomendacion["duracion"].append(duracion_tag.get_text(strip=True) if duracion_tag else "Desconocido")
+            recomendacion["imagen"].append(img_tag)
 
-    return recomencion
+    return recomendacion
 
-
-
-
-'''
-def obtener_receta(enlace):
-    """
-    Extrae los detalles de una receta desde un enlace específico, incluyendo los pasos de preparación.
-    """
-    sopa = obtener_contenido(enlace)
-    if not sopa:
-        return None
-
-    # Extraer el título de la receta
-    titulo = sopa.find('h1', class_='titulo titulo--articulo').get_text(strip=True)
-
-    # Extraer el tipo de receta
-    tipo = sopa.find('a', class_='post-categoria-link').get_text(strip=True)
-
-    # Extraer la valoración de la receta
-    try:
-        valoracion = sopa.find('div', class_='valoracion').get('style', '').split(':')[-1].strip()
-    except AttributeError:
-        valoracion = "50.00%"
-
-    # Extraer las propiedades de la receta
-    propiedades = [prop.get_text(strip=True) for prop in sopa.select('div.properties span')]
-
-    # Extraer los ingredientes
-    ingredientes = [ing.get_text(strip=True) for ing in sopa.select('div.ingredientes label')]
-
-    # Extraer los pasos de preparación
-    pasos = []
-    pasos_container = sopa.find('div', class_='apartado')
-    if pasos_container:
-        for paso in pasos_container.find_all('li', class_='preparacion'):
-            texto_paso = paso.get_text(strip=True)
-            if texto_paso:
-                pasos.append(texto_paso)
-
-    return {
-        "titulo": titulo,
-        "tipo": tipo,
-        "valoracion": valoracion,
-        "propiedades": propiedades,
-        "ingredientes": ingredientes,
-        "pasos": pasos,
-    }
-'''

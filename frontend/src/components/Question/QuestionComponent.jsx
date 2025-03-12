@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import RecipeFinder from "../ChatBotInterface";
+import { guardarUsuario } from "../../api/apiController";
 
 // Hook personalizado para detectar la primera visita
 function useFirstVisit() {
@@ -106,7 +107,7 @@ const screens = [
   {
     key: "alimentacion",
     question: "¿Sigues alguna dieta específica?",
-    options: ["Vegetariano", "Vegano", "Macrobiótico", "Perder peso"],
+    options: ["Vegetarianos", "Veganos", "Macrobióticos", "Perder peso"],
     isMultipleChoice: true,
   },
 ];
@@ -118,14 +119,18 @@ const PreguntasBienvenida = () => {
   const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
-    sessionStorage.setItem("usuario", JSON.stringify(answers));
+    if (Object.keys(answers).length > 0) { // Solo guarda si hay respuestas
+      sessionStorage.setItem("usuario", JSON.stringify(answers));
+    }
   }, [answers]);
 
-  const nextScreen = () => {
+  const nextScreen = async () => {
     if (screen < screens.length - 1) {
       setScreen(screen + 1);
     } else {
-      setCompleted(true);;
+      sessionStorage.setItem("usuario", JSON.stringify(answers)); // Guarda antes de completar
+      await guardarUsuario(answers); // Enviar objeto correctamente
+      setCompleted(true);
     }
   };
 
@@ -149,15 +154,18 @@ const PreguntasBienvenida = () => {
   };
 
   if (!isFirstVisit) return null;
-  if (completed) return <RecipeFinder />; // Muestra RecipeFinder al terminar
+  if (completed) {
+    return <RecipeFinder />; // Muestra RecipeFinder al terminar
+  }
 
   return (
-    isFirstVisit &&
     <Container>
       <Title>BotRamsey</Title>
       <Question>{screens[screen].question}</Question>
 
-      {screens[screen].isMultipleChoice ? (
+      {screens[screen].isFirst ? (
+        <Button onClick={nextScreen}>Continuar</Button>
+      ) : screens[screen].isMultipleChoice ? (
         <div>
           {screens[screen].options.map((option, index) => (
             <div key={index}>
@@ -182,11 +190,8 @@ const PreguntasBienvenida = () => {
           />
           <Button onClick={nextScreen}>Siguiente</Button>
         </div>
-
       )}
-      
     </Container>
-    
   );
 };
 

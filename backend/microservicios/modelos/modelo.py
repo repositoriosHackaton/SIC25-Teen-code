@@ -15,19 +15,27 @@ def modelo():
     ruta_recetas = os.path.join(BASE_DIR, "data", "recetas.json")
     ruta_clasificacion = os.path.join(BASE_DIR, "data", "clasificacion.json")
     ruta_filtros = os.path.join(BASE_DIR, "data", "filtros.json")
-    df_recetas = cargar_recetas(ruta_recetas)
-    tiempo_favorito, dificultad_favorita, categoria_favorita = procesar_historial(df_recetas)
-    similitud = vectorizar(df_recetas)
-    recomendacion = recomendar_receta(df_recetas, similitud, df_recetas["nombre"].iloc[-1])
-    tipo = tridente_predictivo(recomendacion, ruta_clasificacion)
+    ruta_usuario = os.path.join(BASE_DIR, "data", "modelo_usuario.json")
+    if os.path.exists(ruta_recetas):
+        df_recetas = cargar_recetas(ruta_recetas)
+        tiempo_favorito, dificultad_favorita, categoria_favorita = procesar_historial(df_recetas)
+        similitud = vectorizar(df_recetas)
+        recomendacion = recomendar_receta(df_recetas, similitud, df_recetas["nombre"].iloc[-1])
+        tipo = tridente_predictivo(recomendacion, ruta_clasificacion)
 
-    return {"categoria":categoria_favorita,"dificultad":dificultad_favorita,"tiempo":tiempo_favorito,"url":create_url(tipo, tiempo_favorito, dificultad_favorita, ruta_filtros)}
-    
+        return {"categoria":categoria_favorita,"dificultad":dificultad_favorita,"tiempo":tiempo_favorito,"url":create_url(tipo, tiempo_favorito, dificultad_favorita, ruta_filtros, ruta_usuario)}
+    else:
+        print("hola")
+        return  {"categoria":"","dificultad":"","tiempo":"","url":create_url({}, "", "", ruta_filtros, ruta_usuario)}
 
 
 def cargar_recetas(ruta_recetas):
-    with open(ruta_recetas, "r", encoding="utf-8") as f:
-        recetas = json.load(f)
+    if os.path.exists(ruta_recetas):
+        with open(ruta_recetas, "r", encoding="utf-8") as f:
+            recetas = json.load(f)
+
+    else:
+        recetas={}
     df_recetas = pd.DataFrame.from_dict(recetas, orient="index").reset_index()
     df_recetas = df_recetas.dropna()
     df_recetas.columns = ["nombre", "ingredientes", "valoracion", "duracion", "dificultad", "tipo"]
@@ -60,16 +68,61 @@ def tridente_predictivo(recomendacion, ruta_clasificacion):
     tipo = {j.replace("Recetas de ", "") for i in recomendacion for j in clasificacion if i in clasificacion[j]}
     return tipo
 
-def create_url(recipes, time, mode, ruta_filtros):
+def filtrar(filtros, filter_key, value):
+    """Filtra los valores según la clave y el valor proporcionados."""
+    return [filtros[filter_key].get(str(value), "")] if str(value) in filtros[filter_key] else []
+
+def create_url(recipes, time, mode, ruta_filtros, restricciones):
+    # Cargar preferencias del usuario si el archivo existe
+    user = {}
+    if os.path.exists(restricciones):
+        with open(restricciones, 'r', encoding='utf-8') as f:
+            user = json.load(f)
+
+    # Cargar filtros desde el archivo especificado
     with open(ruta_filtros, "r", encoding="utf-8") as f:
         filtros = json.load(f)
+
     BASE = "https://www.recetasgratis.net/busqueda/type/1"
-    def filtrar(filter_key, value):
-        return [filtros[filter_key].get(str(value), "")] if str(value) in filtros[filter_key] else []
-    categorias = sum([filtrar("Categoría", r) for r in recipes], [])
-    tiempo = filtrar("Duración", int(time))
-    dificultad = filtrar("Dificultad", mode)
-    return [f"{BASE}{i}{','.join(tiempo)}{','.join(dificultad)}" for i in categorias]
+
+    # Inicializar listas para filtros
+    categorias = []
+    tiempo = []
+    dificultad = []
+    preferencias = []
+    alimentacion = []
+
+    # Aplicar filtros a categorías, tiempo y dificultad solo si no hay una URL almacenada
+    if "url" in user:
+        categorias = [filtrar(filtros, "Categoría", r) for r in recipes]
+        tiempo = filtrar(filtros, "Duración", int(time)) if time else []
+        dificultad = filtrar(filtros, "Dificultad", mode)
+
+    # Manejo seguro de claves en `user`
+    if "preferencias" in user:
+        preferencias = [filtrar(filtros, "Propiedades", i) for i in user["preferencias"]]
+    if "alimentacion" in user:
+        alimentacion = [filtrar(filtros, "Alimentación", i) for i in user["alimentacion"]]
+
+    # Asegurar que no haya listas anidadas en `categorias`
+    categorias = [item for sublist in categorias for item in sublist]  # Aplana listas
+
+    urls = []
+
+    # Generar combinaciones de URLs
+    for p in preferencias or [""]:  # Si está vacío, usar cadena vacía
+        for a in alimentacion or [""]:
+            if not categorias or not tiempo or not dificultad:
+                urls.append(f"{BASE}{','.join(p)}{','.join(a)}")
+            else:
+                urls.extend(
+                    f"{BASE}{','.join([c])}{','.join(tiempo)}{','.join(dificultad)}{','.join(p)}{','.join(a)}"
+                    for c in categorias
+                )
+
+    return urls
+
+
 
 if __name__ == "__main__":
     modelo()

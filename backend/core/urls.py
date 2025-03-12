@@ -4,9 +4,9 @@ from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
 from microservicios.scraping.views import buscar_receta_view
-from microservicios.accesibilidad.utils.voice_assistant import reproducir_audio
 from microservicios.modelos.views import recomendaciones_view
 from microservicios.scraping.views import mostrar_pasos_view
+from microservicios.usuarios.views import guardar_usuario
 # from microservicios.analisis import views  # Asegúrate de que la vista está correctamente importada
 
 def home(request):
@@ -28,7 +28,7 @@ urlpatterns = [
     # path('analisis/', views.analisis_view, name='analisis'),
     path('api/', include('microservicios.nutricion.urls')),  # URLs del 
     path('api/buscar_receta/', buscar_receta_view, name='buscar_receta'),
-    path('api/', include('microservicios.usuarios.urls')),
+    path('api/guardar_user/',guardar_usuario, name='guardar_usuario'),
     path('api/recomendacion/', recomendaciones_view, name='recomendaciones'),
     path('api/preparacion/', mostrar_pasos_view, name='preparacion')
 ]

@@ -13,5 +13,8 @@ gtts
 seaborn
 matplotlib
 psycopg2-binary
-google-genai
-python-dotenv
+speechrecognition
+torch
+transformers
+numpy
+huggingface_hub

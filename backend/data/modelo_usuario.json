@@ -1,11 +1,10 @@
 {
     "categoria": "Hojaldre dulce",
-    "dificultad": "media",
+    "dificultad": "baja",
     "tiempo": 45.0,
     "url": [
-        "https://www.recetasgratis.net/busqueda/type/1/cat/14/duration_id/4/difficulty_id/3",
-        "https://www.recetasgratis.net/busqueda/type/1/cat/11/duration_id/4/difficulty_id/3",
-        "https://www.recetasgratis.net/busqueda/type/1/cat/10/duration_id/4/difficulty_id/3",
-        "https://www.recetasgratis.net/busqueda/type/1/cat/5/duration_id/4/difficulty_id/3"
+        "https://www.recetasgratis.net/busqueda/type/1/cat/10/duration_id/4/difficulty_id/2",
+        "https://www.recetasgratis.net/busqueda/type/1/cat/16/duration_id/4/difficulty_id/2",
+        "https://www.recetasgratis.net/busqueda/type/1/cat/17/duration_id/4/difficulty_id/2"
     ]
 }

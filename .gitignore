@@ -3,7 +3,7 @@
 __pycache__/
 *.sqlite3
 .env
-venv/
+.venv/
 db.sqlite3
 
 # Django
@@ -18,6 +18,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 package-lock.json
+backend/venv/
 
 # IDEs y editores
 .vscode/
@@ -27,3 +28,10 @@ package-lock.json
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
+
+
+backend/data/modelo_usuario.json
+.qodo
+
+backend/data/recetas.json
+backend/guhuggin_face.py

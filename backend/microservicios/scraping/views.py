@@ -2,51 +2,47 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from .scraper import buscar_receta
 from .scraper import mostrar_pasos
-from google import genai
-from dotenv import load_dotenv
 import os
+import torch
+from transformers import AutoModelForTokenClassification, AutoTokenizer
+import numpy as np
+
+def bertRamsey(texto):
+
+    repo_id = "Misterclon06/bertRamsey"
+
+    # Descargar y cargar modelo + tokenizer
+    model = AutoModelForTokenClassification.from_pretrained(repo_id)
+    tokenizer = AutoTokenizer.from_pretrained(repo_id)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device)
+
+    # 📌 3. Mapeo de etiquetas (Asegúrate de usar las mismas etiquetas que en el entrenamiento)
+    id2label = {0: "O", 1: "B-NOMBRE", 2: "I-NOMBRE", 3: "B-GUSTO", 4: "I-GUSTO", 5: "B-RESTRICCION", 6: "I-RESTRICCION"}
 
 
-def gemini(text, context=""):
-    """
-    Funcion que pasa el texto del usuario por gemini para obtener los datos.
-    """
-    load_dotenv()
-    API_KEY= os.getenv("API_KEY")
-    client = genai.Client(api_key=API_KEY)
-    
-    context += """
-    Necesito que me ayudes a comprender las solicitudes de los usuarios para una aplicación de recetas. A partir de ahora, el usuario pedirá recetas, dietas y posiblemente algunas restricciones como "sin gluten", "sin azúcar", o "sin lactosa". Tu tarea es muy específica:
+    # Tokenizar la oración
+    tokens = tokenizer(texto, truncation=True, padding="max_length", max_length=128, return_tensors="pt")
+    tokens = {key: value.to(device) for key, value in tokens.items()}  # Enviar a GPU si está disponible
 
-    Solo quiero que me des como respuesta la comida o receta que pidió el usuario, junto con la restricción o dieta, si es que la menciona.
+    # Hacer la predicción con el modelo
+    with torch.no_grad():
+        outputs = model(**tokens)
 
-    No incluyas conectivos ni texto adicional, solo palabras clave.
+    logits = outputs.logits
+    predictions = torch.argmax(logits, dim=-1).squeeze().tolist()  # Obtener las etiquetas predichas
 
-    Ejemplos de cómo quiero las respuestas:
+    # Convertir tokens en palabras
+    tokens_decoded = tokenizer.convert_ids_to_tokens(tokens["input_ids"].squeeze().tolist())
 
-    Si el cliente dice: "Quisiera pedir pan con carne", tu respuesta debe ser: "pan carne".
+    # Extraer solo palabras clave (ignorar etiquetas "O")
+    palabras_clave = []
+    for token, label_id in zip(tokens_decoded, predictions):
+        label = id2label.get(label_id, "O")
+        if label.startswith("B-") or label.startswith("I-"):
+            palabras_clave.append(token)
 
-    Si el cliente dice: "quiero pan con carne", tu respuesta debe ser: "pan con carne".
-
-    Si el cliente dice: "Quisiera pedir pan con carne pero sin sal", tu respuesta debe ser: "pan carne sin sal".
-
-    Si el cliente dice: "Quisiera un plato vegano de pasta", tu respuesta debe ser: "pasta vegano".
-
-    Por favor, no me des respuestas largas, solo lo que te pedí. Ten en cuenta que las restricciones son lo que no debe tener la comida y las dietas son para las enfermedades o preferencias del usuario. Gracias. \n
-    """
-
-    def get_response(text: str) -> str:
-        nonlocal context
-        contents = f"{context}\n{text}"
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=contents,
-        )
-        context += f"{text}\n{response.text.strip()}\n"
-        return response.text.strip()
-    
-    gemini_text = get_response(text)
-    return gemini_text
+    return " ".join(palabras_clave).replace(" ##", "")  # Limpiar subpalabras unidas por BERT
 
 def buscar_receta_view(request):
     """
@@ -56,7 +52,7 @@ def buscar_receta_view(request):
     if not query:
         return JsonResponse({"error": "Por favor, proporciona un término de búsqueda."}, status=400)
 
-    promt = gemini(query)
+    promt = bertRamsey(query)
     print("Promt:", promt)
     receta = buscar_receta(promt)
 
@@ -76,3 +72,5 @@ def mostrar_pasos_view(request):
         return JsonResponse(preparacion, safe=False)
     else:
         return JsonResponse({"error": "No se encontró ninguna receta."}, status=404)
+
+

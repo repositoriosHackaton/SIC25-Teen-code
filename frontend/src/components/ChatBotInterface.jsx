@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import { FaUtensils } from "react-icons/fa"; // Kitchen icon
 import { buscarReceta, recomendaciones, preparacion } from "../api/apiController";
+import AudioRecorder from "./Recorder/RecorderButton";
 
 // Function to format the presentation of the data
 function formato_presentacion(data) {
   if (!data || typeof data !== "object") {
     return "<p style='color: red; font-weight: bold;'>⚠️ Error al cargar la receta.</p>";
   }
-
   return `
     <style>
       h1, h2, p, strong {
@@ -26,6 +26,43 @@ function formato_presentacion(data) {
     <p>${data.tipo}</p>
   `;
 }
+
+
+
+const extraerMinutos = (texto) => {
+  const match = texto.match(/(\d+)\s*minuto/); // Busca números antes de "minuto"
+  return match ? parseInt(match[1], 10) : null;
+};
+
+
+const Temporizador = ({ minutos, onFinish }) => {
+  const [tiempo, setTiempo] = useState(minutos * 60); // Convertir minutos a segundos
+
+
+  useEffect(() => {
+    if (tiempo <= 0) {
+      onFinish(); // Llamar función cuando el tiempo termine
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTiempo((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [tiempo]);
+
+  const minutosRestantes = Math.floor(tiempo / 60);
+  const segundosRestantes = tiempo % 60;
+
+  return (
+    <div>
+      <h3>Tiempo restante: {minutosRestantes}m : {segundosRestantes}s</h3>
+      {tiempo <= 0 && <p>¡Tiempo finalizado!</p>}
+    </div>
+  );
+};
+
 
 // 🌑 Global styles
 const GlobalStyle = createGlobalStyle`
@@ -272,12 +309,17 @@ const InputContainer = styled.div`
 
 const RecipeFinder = () => {
   const [preparacion_data, setPreparacion] = useState([]);
-  const [paso, setPaso] = useState(() => Number(sessionStorage.getItem("paso")) || 0);
+  useEffect(() => {
+    sessionStorage.clear(); // Limpia la sesión al cargar la página
+  }, []);  
+
+  const [paso, setPaso] = useState(0); // Asegura que siempre inicie en 0
   const [recomendation, setRecomendation] = useState({ link: [] });
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [data, setData] = useState({});
   const [loading, setLoading] = useState(false);
+  const [mostrarCronometro, setMostrarCronometro] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -331,7 +373,7 @@ const RecipeFinder = () => {
 
     setInputValue("");
   };
-
+  
   const cargar_pasos = async () => {
     const datos = await preparacion(data.link);
     setPreparacion(datos);
@@ -423,6 +465,38 @@ const RecipeFinder = () => {
 
             <PreparacionMark visible={!!preparacion_data.length}>
               {preparacion_data[paso]}
+              {preparacion_data?.[paso]?.includes('minuto') && (
+                <div>
+                <button
+                  onClick={() => setMostrarCronometro(true)}
+                  disabled={!preparacion_data?.[paso] || !preparacion_data[paso].includes('minuto')}
+                  style={{
+                    background: "linear-gradient(135deg, #007bff, #0056b3)", // Azul degradado
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "12px 24px",
+                    borderRadius: "8px",
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                    margin: "10px 0",
+                    width: "100%", // Ocupa todo el ancho disponible
+                    maxWidth: "250px", // No crece demasiado
+                    textAlign: "center",
+                  }}
+                  onMouseOver={(e) => e.target.style.background = "#0056b3"}
+                  onMouseOut={(e) => e.target.style.background = "linear-gradient(135deg, #007bff, #0056b3)"}
+                >
+                  ⏳ Iniciar Cronómetro
+                </button> 
+
+                {mostrarCronometro && <Temporizador minutos={extraerMinutos(preparacion_data[paso])} onFinish={() => setMostrarCronometro(false)} />}
+                
+                
+                </div>
+              )}
               <div style={{
                 display: "flex",
                 justifyContent: "space-between",  // Espacia los botones uniformemente
@@ -485,6 +559,7 @@ const RecipeFinder = () => {
               }}
             />
             <Button onClick={handleSendMessage}>Enviar</Button>
+            <AudioRecorder onButtonClick={setInputValue}/>
           </InputContainer>
         </ChatArea>
       </ChatContainer>
