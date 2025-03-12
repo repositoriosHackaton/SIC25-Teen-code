@@ -1,0 +1,53 @@
+{
+  "Dificultad": {
+    "muy baja": "/difficulty_id/1",
+    "baja": "/difficulty_id/2",
+    "media": "/difficulty_id/3",
+    "alta": "/difficulty_id/4",
+    "muy alta": "/difficulty_id/5"
+  },
+  "Categoría": {
+    "Postres": "/cat/17",
+    "Pan y bollería": "/cat/16",
+    "Aperitivos y tapas": "/cat/1",
+    "Verduras": "/cat/7",
+    "Carne": "/cat/10",
+    "Aves y caza": "/cat/11",
+    "Pasta": "/cat/5",
+    "Pescado": "/cat/12",
+    "Cócteles y bebidas": "/cat/15",
+    "Ensaladas": "/cat/4",
+    "Sopas y cremas": "/cat/6",
+    "Arroces y cereales": "/cat/9",
+    "Huevos y lácteos": "/cat/18",
+    "Mariscos": "/cat/13",
+    "Salsas": "/cat/14",
+    "Legumbres": "/cat/8",
+    "Guisos y Potajes": "/cat/19"
+  },
+  "Duración": {
+    "10": "/duration_id/1",
+    "15": "/duration_id/2",
+    "30": "/duration_id/3",
+    "45": "/duration_id/4",
+    "90": "/duration_id/6",
+    "150": "/duration_id/8",
+    "180": "/duration_id/9",
+    "240": "/duration_id/10",
+    "360": "/duration_id/11",
+    "480": "/duration_id/12",
+    "1440": "/duration_id/13"
+  },
+  "Propiedades": {
+    "Sin gluten": "/prop_nogluten/1",
+    "Sin lactosa": "/prop_nolactose/1",
+    "Sin azúcar": "/prop_nosugar/1",
+    "Sin sal": "/prop_nosalt/1"
+  },
+  "Alimentación": {
+    "Vegetarianos": "/diet_vegetarian/1",
+    "Veganos": "/diet_vegan/1",
+    "Macrobióticos": "/diet_macrobiotic/1",
+    "Perder peso": "/diet_loseweight/1"
+  }
+}

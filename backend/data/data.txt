@@ -1,0 +1,5 @@
+Propósito
+Esta carpeta contiene datos crudos, procesados, y listos para análisis.
+
+Los datos pueden estar en formato .csv, .json, etc.
+Se usa como almacenamiento central para los datos utilizados y generados en el proyecto.

@@ -1,0 +1,94 @@
+# Pasos para configurar el proyecto BotRamsey
+
+## 1. Requisitos previos
+
+Antes de comenzar, asegúrate de tener instalados los siguientes programas:
+
+- **Python 3.x**: [Descargar desde python.org](https://www.python.org/downloads/)
+- **Node.js**: [Descargar desde nodejs.org](https://nodejs.org/)
+- **Git**: [Descargar desde git-scm.com](https://git-scm.com/)
+- **Virtualenv** (opcional pero recomendado):
+  ```
+  pip install virtualenv
+  ```
+
+---
+
+## 2. Clonar el repositorio
+
+Clona el repositorio desde GitHub:
+
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd <NOMBRE_DEL_REPOSITORIO>
+```
+
+---
+
+## 3. Configuración del backend (Django)
+
+1. Ve al directorio del backend:
+
+
+   cd backend
+   ```
+
+2. Crea y activa un entorno virtual:
+
+   - **Windows:**
+
+     virtualenv venv
+     venv\Scripts\activate
+     ```
+   - **Linux/Mac:**
+
+     virtualenv venv
+     source venv/bin/activate
+     ```
+
+3. Instala las dependencias del backend:
+
+
+   pip install -r requirements.txt
+   ```
+
+4. Aplica las migraciones de la base de datos:
+
+
+   python manage.py migrate
+   ```
+
+5. Inicia el servidor de desarrollo de Django:
+
+
+   python manage.py runserver
+   ```
+
+   Accede a [http://127.0.0.1:8000](http://127.0.0.1:8000) para verificar que el backend funciona.
+
+---
+
+## 4. Configuración del frontend (React)
+
+1. Ve al directorio del frontend:
+
+
+   cd frontend
+   ```
+
+2. Instala las dependencias del frontend:
+
+   npm install
+   ```
+
+3. Inicia el servidor de desarrollo de React:
+
+
+   npm start
+   ```
+
+   Accede a [http://localhost:3000](http://localhost:3000) para verificar que el frontend funciona.
+
+---
+
+
