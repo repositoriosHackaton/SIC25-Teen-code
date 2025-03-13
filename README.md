@@ -2,7 +2,7 @@
 
 **Tu Asistente Culinario Inteligente**
 
-
+![Logo](Imagen1.png)
 
 ## Tabla de Contenidos
 
@@ -35,7 +35,9 @@ El proyecto sigue una arquitectura basada en **cliente-servidor** con las siguie
   - **Recomendaciones:** TF-IDF + Cosine Similarity
   - **Procesamiento de Lenguaje Natural:** Modelo BERT
 
-### Diagrama de Arquitectura
+### precision del modelo
+
+![Entrenamiento del Modelo](<Captura de pantalla 2025-03-12 125419.png>)
 
 
 ## Proceso de Desarrollo
