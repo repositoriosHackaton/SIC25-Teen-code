@@ -25,7 +25,6 @@ def modelo():
 
         return {"categoria":categoria_favorita,"dificultad":dificultad_favorita,"tiempo":tiempo_favorito,"url":create_url(tipo, tiempo_favorito, dificultad_favorita, ruta_filtros, ruta_usuario)}
     else:
-        print("hola")
         return  {"categoria":"","dificultad":"","tiempo":"","url":create_url({}, "", "", ruta_filtros, ruta_usuario)}
 
 
